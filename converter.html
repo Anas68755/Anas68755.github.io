@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Letters Converter</title>
+    <style>
+        :root {
+            --primary-color: #6200EE;
+            --primary-light: #BB86FC;
+            --secondary-color: #03DAC6;
+            --background-color: #121212;
+            --surface-color: #1E1E1E;
+            --text-color-primary: #E0E0E0;
+            --text-color-secondary: #B0B0B0;
+            --error-color: #CF6679;
+            --border-radius: 12px;
+            --spacing-xs: clamp(0.5rem, 1.5vw, 0.75rem);
+            --spacing-sm: clamp(0.75rem, 2vw, 1rem);
+            --spacing-md: clamp(1rem, 3vw, 1.5rem);
+            --spacing-lg: clamp(1.5rem, 4vw, 2rem);
+            --font-size-sm: clamp(0.875rem, 2vw, 1rem);
+            --font-size-md: clamp(1rem, 2.5vw, 1.25rem);
+            --font-size-lg: clamp(1.5rem, 4vw, 2rem);
+            --font-size-xl: clamp(2rem, 5vw, 2.5rem);
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            overflow: hidden;
+        }
+
+        .app-container {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            width: min(90vw, 1200px);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            padding-top: calc(var(--spacing-lg) + env(safe-area-inset-top, 53px));
+            padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
+            padding-left: calc(var(--spacing-lg) + env(safe-area-inset-left, 0px));
+            padding-right: calc(var(--spacing-lg) + env(safe-area-inset-right, 0px));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .app-header h1 {
+            font-size: var(--font-size-xl);
+            color: var(--primary-light);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        label {
+            font-size: var(--font-size-sm);
+            color: var(--text-color-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: clamp(80px, 15vh, 150px);
+            padding: var(--spacing-sm);
+            border: 1px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: #2a2a2a;
+            color: var(--text-color-primary);
+            font-size: var(--font-size-md);
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 2px rgba(var(--primary-light), 0.3);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--text-color-primary);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            min-height: 44px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            background-color: var(--primary-color);
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background-color: var(--secondary-color);
+            color: var(--background-color);
+        }
+
+        .btn.secondary:hover {
+            background-color: #06F0D9;
+        }
+
+        .btn.clear {
+            background-color: var(--error-color);
+        }
+
+        .btn.clear:hover {
+            background-color: #E68A99;
+        }
+
+        .emoji {
+            font-size: var(--font-size-md);
+            line-height: 1;
+        }
+
+        .custom-mappings-section {
+            background-color: #2a2a2a;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .custom-mappings-section h2 {
+            font-size: var(--font-size-md);
+            color: var(--primary-light);
+            margin: 0 0 var(--spacing-xs) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .mapping-input-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            flex-wrap: wrap;
+        }
+
+        .mapping-input {
+            flex: 1;
+            min-width: 80px;
+            padding: var(--spacing-xs);
+            border: 1px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: #3a3a3a;
+            color: var(--text-color-primary);
+            font-size: var(--font-size-sm);
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .mapping-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 2px rgba(var(--primary-light), 0.3);
+        }
+
+        .add-mapping-btn {
+            flex-shrink: 0;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: var(--font-size-sm);
+            min-height: 36px;
+        }
+
+        .mappings-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-sm);
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #333333;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-sm);
+            color: var(--text-color-secondary);
+        }
+
+        .mapping-item span {
+            color: var(--text-color-primary);
+        }
+
+        .mapping-item .remove-btn {
+            background-color: var(--error-color);
+            color: var(--text-color-primary);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            flex-shrink: 0;
+        }
+
+        .mapping-item .remove-btn:hover {
+            background-color: #E68A99;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: var(--spacing-md);
+                padding-top: calc(var(--spacing-md) + env(safe-area-inset-top, 53px));
+                padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
+            }
+            .app-header h1 {
+                font-size: var(--font-size-lg);
+            }
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn {
+                font-size: var(--font-size-md);
+            }
+            .mapping-input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .mapping-input-row .emoji {
+                align-self: flex-start;
+            }
+            .add-mapping-btn {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 1024px) {
+            .controls-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .controls-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Letters Converter</h1>
+        </header>
+
+        <div class="input-group">
+            <label for="inputText">Input Text:</label>
+            <textarea id="inputText" placeholder="Type or paste your text here..."></textarea>
+        </div>
+
+        <div class="controls-grid">
+            <button class="btn" onclick="convertText('uppercase')">
+                <span class="emoji">⬆️</span> Uppercase
+            </button>
+            <button class="btn" onclick="convertText('lowercase')">
+                <span class="emoji">⬇️</span> Lowercase
+            </button>
+            <button class="btn" onclick="convertText('titlecase')">
+                <span class="emoji">🅰️</span> Title Case
+            </button>
+            <button class="btn" onclick="convertText('reverse')">
+                <span class="emoji">↩️</span> Reverse
+            </button>
+            <button class="btn" onclick="convertText('leetspeak')">
+                <span class="emoji">🤖</span> Leetspeak
+            </button>
+            <button class="btn" onclick="convertText('custom')">
+                <span class="emoji">✨</span> Apply Custom
+            </button>
+            <button class="btn secondary" onclick="copyToClipboard()">
+                <span class="emoji">📋</span> Copy Output
+            </button>
+            <button class="btn clear" onclick="clearAll()">
+                <span class="emoji">🧹</span> Clear All
+            </button>
+        </div>
+
+        <div class="input-group">
+            <label for="outputText">Converted Text (Editable):</label>
+            <textarea id="outputText" placeholder="Converted text will appear here..." contenteditable="true"></textarea>
+        </div>
+
+        <div class="custom-mappings-section">
+            <h2>Custom Mappings <span class="emoji">🛠️</span></h2>
+            <div class="mapping-input-row">
+                <input type="text" id="findInput" placeholder="Find (e.g., 'a')" class="mapping-input">
+                <span class="emoji">➡️</span>
+                <input type="text" id="replaceInput" placeholder="Replace (e.g., '@')" class="mapping-input">
+                <button class="btn add-mapping-btn" onclick="addMapping()">
+                    <span class="emoji">➕</span> Add
+                </button>
+            </div>
+            <div id="customMappingsList" class="mappings-list">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const APP_STORAGE_KEY = 'LETTERS_CONVERTER_APP_DATA';
+        window.APP_STORAGE_KEY = APP_STORAGE_KEY;
+
+        const inputTextarea = document.getElementById('inputText');
+        const outputTextarea = document.getElementById('outputText');
+        const findInput = document.getElementById('findInput');
+        const replaceInput = document.getElementById('replaceInput');
+        const customMappingsList = document.getElementById('customMappingsList');
+
+        let customMappings = [];
+
+        function toTitleCase(str) {
+            return str.replace(/\w\S*/g, function(txt) {
+                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+            });
+        }
+
+        function toLeetSpeak(str) {
+            const leetMap = {
+                'a': '4', 'A': '4',
+                'e': '3', 'E': '3',
+                'i': '1', 'I': '1',
+                'o': '0', 'O': '0',
+                's': '5', 'S': '5',
+                't': '7', 'T': '7',
+                'g': '9', 'G': '9',
+                'b': '8', 'B': '8',
+                'l': '1', 'L': '1',
+                'z': '2', 'Z': '2'
+            };
+            return str.split('').map(char => leetMap[char] || char).join('');
+        }
+
+        function addMapping() {
+            const find = findInput.value.trim();
+            const replace = replaceInput.value.trim();
+
+            if (!find) {
+                alert('Please enter text to find.');
+                return;
+            }
+
+            if (customMappings.some(m => m.find === find)) {
+                alert(`Mapping for "${find}" already exists.`);
+                return;
+            }
+
+            customMappings.push({ find, replace });
+            renderMappings();
+            saveData();
+            findInput.value = '';
+            replaceInput.value = '';
+            findInput.focus();
+        }
+
+        function removeMapping(index) {
+            customMappings.splice(index, 1);
+            renderMappings();
+            saveData();
+        }
+
+        function renderMappings() {
+            customMappingsList.innerHTML = '';
+            if (customMappings.length === 0) {
+                customMappingsList.innerHTML = '<p style="text-align: center; color: var(--text-color-secondary); font-size: var(--font-size-sm);">No custom mappings yet. Add one above! 👆</p>';
+                return;
+            }
+
+            customMappings.forEach((mapping, index) => {
+                const mappingItem = document.createElement('div');
+                mappingItem.className = 'mapping-item';
+                mappingItem.innerHTML = `
+                    <span>"${mapping.find}" ➡️ "${mapping.replace}"</span>
+                    <button class="remove-btn" onclick="removeMapping(${index})">✖️</button>
+                `;
+                customMappingsList.appendChild(mappingItem);
+            });
+        }
+
+        function convertText(type) {
+            let text = inputTextarea.value;
+            let convertedText = '';
+
+            switch (type) {
+                case 'uppercase':
+                    convertedText = text.toUpperCase();
+                    break;
+                case 'lowercase':
+                    convertedText = text.toLowerCase();
+                    break;
+                case 'titlecase':
+                    convertedText = toTitleCase(text);
+                    break;
+                case 'reverse':
+                    convertedText = text.split('').reverse().join('');
+                    break;
+                case 'leetspeak':
+                    convertedText = toLeetSpeak(text);
+                    break;
+                case 'custom':
+                    convertedText = text;
+                    customMappings.forEach(mapping => {
+                        // Using replaceAll for global replacement, case-sensitive
+                        convertedText = convertedText.replaceAll(mapping.find, mapping.replace);
+                    });
+                    break;
+                default:
+                    convertedText = text;
+            }
+            outputTextarea.value = convertedText;
+            saveData();
+        }
+
+        function copyToClipboard() {
+            outputTextarea.select();
+            outputTextarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                alert('Copied to clipboard! 📋');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy text. Please copy manually.');
+            }
+            window.getSelection().removeAllRanges();
+        }
+
+        function clearAll() {
+            inputTextarea.value = '';
+            outputTextarea.value = '';
+            saveData();
+        }
+
+        function saveData() {
+            const data = {
+                inputText: inputTextarea.value,
+                outputText: outputTextarea.value,
+                customMappings: customMappings
+            };
+            localStorage.setItem(APP_STORAGE_KEY + '_data', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem(APP_STORAGE_KEY + '_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                inputTextarea.value = data.inputText || '';
+                outputTextarea.value = data.outputText || '';
+                customMappings = data.customMappings || [];
+            }
+            renderMappings();
+        }
+
+        inputTextarea.addEventListener('input', saveData);
+        outputTextarea.addEventListener('input', saveData);
+
+        window.addEventListener('load', loadData);
+
+        document.body.addEventListener('dblclick', function(event) {
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>

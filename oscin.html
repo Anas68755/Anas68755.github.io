@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Lookup Tool</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #F5A623;
+            --background-color: #F0F2F5;
+            --card-background: #FFFFFF;
+            --text-color: #333333;
+            --border-color: #E0E0E0;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+
+            --spacing-xs: clamp(0.25rem, 1vw, 0.5rem);
+            --spacing-sm: clamp(0.5rem, 2vw, 1rem);
+            --spacing-md: clamp(1rem, 4vw, 2rem);
+            --spacing-lg: clamp(1.5rem, 6vw, 3rem);
+
+            --font-size-sm: clamp(0.8rem, 2vw, 1rem);
+            --font-size-md: clamp(1rem, 2.5vw, 1.25rem);
+            --font-size-lg: clamp(1.25rem, 3vw, 1.5rem);
+            --font-size-xl: clamp(1.5rem, 4vw, 2rem);
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            padding: env(safe-area-inset-top, 53px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 16px);
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            background-color: var(--card-background);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            padding: var(--spacing-md);
+            width: min(90vw, 1200px);
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: var(--font-size-xl);
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: var(--font-size-md);
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            height: 44px;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-md);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            min-width: 120px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+        }
+
+        button:hover {
+            background-color: #3A7BD5;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.clear-button {
+            background-color: #CC3333;
+        }
+
+        button.clear-button:hover {
+            background-color: #B32D2D;
+        }
+
+        .results-section {
+            background-color: var(--background-color);
+            border-radius: 12px;
+            padding: var(--spacing-sm);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .results-section h2 {
+            font-size: var(--font-size-lg);
+            color: var(--primary-color);
+            margin: 0;
+            padding-bottom: var(--spacing-xs);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .results-section h2 span {
+            font-size: var(--font-size-sm);
+            color: #666;
+            margin-left: var(--spacing-xs);
+        }
+
+        .results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .results-list li {
+            background-color: var(--card-background);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 6px;
+            font-size: var(--font-size-sm);
+            word-break: break-all;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--spacing-xs);
+            border: 1px solid var(--border-color);
+        }
+
+        .results-list li .item-text {
+            flex-grow: 1;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        .results-list li a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .results-list li a:hover {
+            text-decoration: underline;
+        }
+
+        .osint-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .osint-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            font-size: var(--font-size-sm);
+            text-decoration: none;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+
+        .osint-actions a:hover {
+            background-color: #E0E0E0;
+            transform: scale(1.05);
+        }
+
+        .osint-actions a:active {
+            transform: scale(0.95);
+        }
+
+        .no-results {
+            font-style: italic;
+            color: #666;
+            font-size: var(--font-size-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: var(--spacing-sm);
+                gap: var(--spacing-sm);
+            }
+            h1 {
+                font-size: var(--font-size-xl);
+            }
+            button {
+                width: 100%;
+                min-width: unset;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            .results-list li {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .osint-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+                margin-top: var(--spacing-xs);
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 1024px) {
+            .button-group {
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>OSINT Lookup Tool 🕵️‍♀️</h1>
+
+        <textarea id="inputText" placeholder="Paste or type text here to find links, emails, usernames, and phone numbers for OSINT..."></textarea>
+
+        <div class="button-group">
+            <button id="lookupButton">🔍 Perform OSINT</button>
+            <button id="clearButton" class="clear-button">🧹 Clear All</button>
+        </div>
+
+        <input type="text" id="filterKeywordInput" placeholder="Filter results by keyword... 🔎">
+
+        <div class="results-section">
+            <h2 id="linksHeader">🔗 Links <span id="linksCount">(0)</span></h2>
+            <ul id="linksList" class="results-list">
+                <li class="no-results">No links found.</li>
+            </ul>
+        </div>
+
+        <div class="results-section">
+            <h2 id="emailsHeader">📧 Emails <span id="emailsCount">(0)</span></h2>
+            <ul id="emailsList" class="results-list">
+                <li class="no-results">No emails found.</li>
+            </ul>
+        </div>
+
+        <div class="results-section">
+            <h2 id="usersHeader">👤 Usernames <span id="usersCount">(0)</span></h2>
+            <ul id="usersList" class="results-list">
+                <li class="no-results">No usernames found.</li>
+            </ul>
+        </div>
+
+        <div class="results-section">
+            <h2 id="phonesHeader">📞 Phone Numbers <span id="phonesCount">(0)</span></h2>
+            <ul id="phonesList" class="results-list">
+                <li class="no-results">No phone numbers found.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('dblclick', function(event) {
+            event.preventDefault();
+        });
+
+        const APP_STORAGE_KEY = 'OSINT_LOOKUP_TOOL_APP';
+        window.APP_STORAGE_KEY = APP_STORAGE_KEY;
+
+        const inputText = document.getElementById('inputText');
+        const lookupButton = document.getElementById('lookupButton');
+        const clearButton = document.getElementById('clearButton');
+        const filterKeywordInput = document.getElementById('filterKeywordInput');
+
+        const linksList = document.getElementById('linksList');
+        const emailsList = document.getElementById('emailsList');
+        const usersList = document.getElementById('usersList');
+        const phonesList = document.getElementById('phonesList');
+
+        const linksCount = document.getElementById('linksCount');
+        const emailsCount = document.getElementById('emailsCount');
+        const usersCount = document.getElementById('usersCount');
+        const phonesCount = document.getElementById('phonesCount');
+
+        const linkRegex = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/[a-zA-Z0-9]+\.[^\s]{2,}|[a-zA-Z0-9]+\.[^\s]{2,})(?:[^\s]*)/gi;
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        const userRegex = /(?:@[\w.]+)|(?:\b[a-zA-Z][a-zA-Z0-9_.-]{2,30}\b)/g;
+        const phoneRegex = /(?:\+\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{2,4}[-.\s]?\d{2,4}[-.\s]?\d{2,4}(?:\s*x\d+)?/g;
+
+        let allExtractedLinks = [];
+        let allExtractedEmails = [];
+        let allExtractedUsers = [];
+        let allExtractedPhones = [];
+
+        function getOsintActions(type, value) {
+            const encodedValue = encodeURIComponent(value);
+            let actions = [];
+
+            switch (type) {
+                case 'link':
+                    actions.push({ emoji: '🌐', url: value.startsWith('http') ? value : `http://${value}`, title: 'Open Link' });
+                    actions.push({ emoji: ' Wayback', url: `https://web.archive.org/web/*/${encodedValue}`, title: 'View on Wayback Machine' });
+                    const domain = value.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+                    if (domain) {
+                        actions.push({ emoji: ' Whois', url: `https://whois.domaintools.com/${encodeURIComponent(domain)}`, title: 'Whois Lookup' });
+                    }
+                    break;
+                case 'email':
+                    actions.push({ emoji: '🔎', url: `https://www.google.com/search?q=${encodedValue}`, title: 'Google Search' });
+                    actions.push({ emoji: ' Pwned', url: `https://haveibeenpwned.com/unified/${encodedValue}`, title: 'Check Have I Been Pwned' });
+                    const emailDomain = value.split('@')[1];
+                    if (emailDomain) {
+                        actions.push({ emoji: ' Hunter', url: `https://hunter.io/search/${encodeURIComponent(emailDomain)}`, title: 'Hunter.io Domain Search' });
+                    }
+                    break;
+                case 'username':
+                    actions.push({ emoji: '🔎', url: `https://www.google.com/search?q=${encodedValue}`, title: 'Google Search' });
+                    actions.push({ emoji: ' 🐦', url: `https://twitter.com/search?q=${encodedValue}`, title: 'Twitter Search' });
+                    actions.push({ emoji: ' 👽', url: `https://www.reddit.com/search/?q=${encodedValue}`, title: 'Reddit Search' });
+                    actions.push({ emoji: ' Namechk', url: `https://namechk.com/${encodedValue}`, title: 'Namechk Profile Search' });
+                    break;
+                case 'phone':
+                    actions.push({ emoji: '🔎', url: `https://www.google.com/search?q=${encodedValue}`, title: 'Google Search' });
+                    break;
+            }
+            return actions;
+        }
+
+        function displayResults(listElement, countElement, items, type) {
+            listElement.innerHTML = '';
+            if (items.length === 0) {
+                listElement.innerHTML = '<li class="no-results">No items found.</li>';
+            } else {
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    const itemTextSpan = document.createElement('span');
+                    itemTextSpan.classList.add('item-text');
+                    itemTextSpan.textContent = item;
+                    li.appendChild(itemTextSpan);
+
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.classList.add('osint-actions');
+
+                    const osintActions = getOsintActions(type, item);
+                    osintActions.forEach(action => {
+                        const a = document.createElement('a');
+                        a.href = action.url;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.title = action.title;
+                        a.textContent = action.emoji;
+                        actionsDiv.appendChild(a);
+                    });
+                    li.appendChild(actionsDiv);
+                    listElement.appendChild(li);
+                });
+            }
+            countElement.textContent = `(${items.length})`;
+        }
+
+        function performLookup() {
+            const text = inputText.value;
+
+            allExtractedLinks = [...new Set(text.match(linkRegex) || [])];
+            allExtractedEmails = [...new Set(text.match(emailRegex) || [])];
+            allExtractedUsers = [...new Set(text.match(userRegex) || [])];
+            allExtractedPhones = [...new Set(text.match(phoneRegex) || [])];
+
+            applyFilter();
+            saveData();
+        }
+
+        function applyFilter() {
+            const filterKeyword = filterKeywordInput.value.toLowerCase().trim();
+
+            let filteredLinks = allExtractedLinks;
+            let filteredEmails = allExtractedEmails;
+            let filteredUsers = allExtractedUsers;
+            let filteredPhones = allExtractedPhones;
+
+            if (filterKeyword) {
+                filteredLinks = allExtractedLinks.filter(item => item.toLowerCase().includes(filterKeyword));
+                filteredEmails = allExtractedEmails.filter(item => item.toLowerCase().includes(filterKeyword));
+                filteredUsers = allExtractedUsers.filter(item => item.toLowerCase().includes(filterKeyword));
+                filteredPhones = allExtractedPhones.filter(item => item.toLowerCase().includes(filterKeyword));
+            }
+
+            displayResults(linksList, linksCount, filteredLinks, 'link');
+            displayResults(emailsList, emailsCount, filteredEmails, 'email');
+            displayResults(usersList, usersCount, filteredUsers, 'username');
+            displayResults(phonesList, phonesCount, filteredPhones, 'phone');
+        }
+
+        function clearAll() {
+            inputText.value = '';
+            filterKeywordInput.value = '';
+            allExtractedLinks = [];
+            allExtractedEmails = [];
+            allExtractedUsers = [];
+            allExtractedPhones = [];
+            applyFilter();
+            saveData();
+        }
+
+        function saveData() {
+            const data = {
+                inputText: inputText.value,
+                filterKeyword: filterKeywordInput.value
+            };
+            localStorage.setItem(APP_STORAGE_KEY + '_data', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem(APP_STORAGE_KEY + '_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                inputText.value = data.inputText || '';
+                filterKeywordInput.value = data.filterKeyword || '';
+                if (inputText.value) {
+                    performLookup();
+                } else {
+                    applyFilter();
+                }
+            }
+        }
+
+        lookupButton.addEventListener('click', performLookup);
+        clearButton.addEventListener('click', clearAll);
+        filterKeywordInput.addEventListener('input', applyFilter);
+
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
